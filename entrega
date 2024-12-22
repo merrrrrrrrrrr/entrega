@@ -1,0 +1,61 @@
+# 1. Cargar las librerías y los datos
+install.packages("dplyr")
+install.packages("tidyr")
+library(dplyr)
+library(tidyr)
+
+data(mtcars)
+df <- as.data.frame(mtcars)
+
+# 2. Selección de columnas y filtrado de filas
+df_selected <- df %>%
+  select(mpg, cyl, hp, gear) %>%
+  filter(cyl > 4)
+
+# Verificar resultados
+print(df_selected)
+
+# 3. Ordenación y renombrado de columnas
+df_sorted <- df_selected %>%
+  arrange(desc(hp)) %>%
+  rename(consumo = mpg, potencia = hp)
+
+# Verificar resultados
+print(df_sorted)
+
+# 4. Creación de nuevas columnas y agregación de datos
+df_efficiency <- df_sorted %>%
+  mutate(eficiencia = consumo / potencia) %>%
+  group_by(cyl) %>%
+  summarise(consumo_medio = mean(consumo), potencia_maxima = max(potencia))
+
+# Verificar resultados
+print(df_efficiency)
+
+# 5. Creación del segundo dataframe y unión de dataframes
+df_transmision <- data.frame(
+  gear = c(3, 4, 5),
+  tipo_transmision = c("Manual", "Automática", "Semiautomática")
+)
+
+df_joined <- left_join(df_sorted, df_transmision, by = "gear")
+
+# Verificar resultados
+print(df_joined)
+
+# 6. Transformación de formatos
+df_long <- df_joined %>%
+  pivot_longer(cols = c(consumo, potencia, eficiencia), 
+               names_to = "medida", values_to = "valor")
+
+# Agrupar y verificar duplicados
+df_long_grouped <- df_long %>%
+  group_by(cyl, gear, tipo_transmision, medida) %>%
+  summarise(valor = mean(valor)) 
+
+# Volver a formato ancho
+df_wide <- df_long_grouped %>%
+  pivot_wider(names_from = medida, values_from = valor)
+
+# Verificar resultados
+print(df_wide)
